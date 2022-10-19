@@ -10,6 +10,6 @@
   display: flex;
   visibility: hidden;
   opacity: 0;
-  transition: visibility 0s, opacity 0.5s linear;
+  transition: 1s;
   z-index: 5;
 }

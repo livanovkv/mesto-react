@@ -44,11 +44,22 @@ function App() {
 			<div className="page">
 				<Header />
 
-				<Main onEditAvatar={handleEditAvatarClick} onEditProfile={handleEditProfileClick} onAddPlace={handleAddPlaceClick} onCardClick={handleCardClick} />
+				<Main
+					onEditAvatar={handleEditAvatarClick}
+					onEditProfile={handleEditProfileClick}
+					onAddPlace={handleAddPlaceClick}
+					onCardClick={handleCardClick}
+				/>
 
 				<Footer />
 
-				<PopupWithForm name="profile" title="Редактировать профиль" buttonText="Сохранить" isOpen={isEditProfilePopupOpen} onClose={closeAllPopups}>
+				<PopupWithForm
+					name="profile"
+					title="Редактировать профиль"
+					buttonText="Сохранить"
+					isOpen={isEditProfilePopupOpen}
+					onClose={closeAllPopups}
+				>
 					<input
 						id="inputAbout"
 						className="popup__form-input popup__form-input_name"
@@ -129,14 +140,12 @@ function App() {
 					name="delete-confirm"
 					title="Вы уверены?"
 					buttonText="Да"
-				>
-
-				</PopupWithForm>
+				></PopupWithForm>
 
 				<ImagePopup card={selectedCard} onClose={closeAllPopups} />
 			</div>
 		</>
-	)
+	);
 }
 
 export default App;

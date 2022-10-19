@@ -1,6 +1,6 @@
 # Проект Mesto Russia
 
-- [Ссылка на Github Pages](https://livanovkv.github.io/mesto/)
+- [Ссылка на Github Pages](https://livanovkv.github.io/mesto-react/)
 
 # Проект "Mesto Russia" - 10-спринт. Запуск проекта на React
 

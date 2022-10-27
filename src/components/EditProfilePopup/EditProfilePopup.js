@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import PopupWithForm from "../popupWithForm/PopupWithForm";
 import { TranslationContext } from '../../contexts/CurrentUserContext';
-import FormValidator from "../FormValidator/FormValidator";
+import FormValidator from "../../hooks/FormValidator/FormValidator";
 
 function EditProfilePopup({
 	isOpen,

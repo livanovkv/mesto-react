@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import PopupWithForm from "../popupWithForm/PopupWithForm";
-import FormValidator from "../FormValidator/FormValidator";
+import FormValidator from "../../hooks/FormValidator/FormValidator";
 
 function EditAvatarPopup({
 	isOpen,

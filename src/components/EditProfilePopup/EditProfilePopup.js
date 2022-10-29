@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import PopupWithForm from "../popupWithForm/PopupWithForm";
+import PopupWithForm from "../PopupWithForm/PopupWithForm";
 import { TranslationContext } from '../../contexts/CurrentUserContext';
 import FormValidator from "../../hooks/FormValidator/FormValidator";
 

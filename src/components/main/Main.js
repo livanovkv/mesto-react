@@ -1,9 +1,17 @@
 import React, { useContext } from "react";
-import "./Main.css";
-import Card from "../card/Card";
+import './Main.css';
+import Card from "../Card/Card";
 import { TranslationContext } from '../../contexts/CurrentUserContext';
 
-function Main({ onEditAvatar, onEditProfile, onAddPlace, onCardClick, onCardLike, cards, onCardDelete }) {
+function Main({
+	onEditAvatar,
+	onEditProfile,
+	onAddPlace,
+	onCardClick,
+	onCardLike,
+	cards,
+	onCardDelete
+}) {
 	const currentUser = useContext(TranslationContext);
 
 	return (
@@ -36,20 +44,21 @@ function Main({ onEditAvatar, onEditProfile, onAddPlace, onCardClick, onCardLike
 
 			<section className="gallery">
 				<ul className="gallery__grid">
-					{cards.map((card) => {
+					{cards.map(card => {
 						return (
 							<Card
 								key={card._id}
 								card={card}
 								onCardClick={onCardClick}
 								onCardLike={onCardLike}
-								onCardDelete={onCardDelete} />
+								onCardDelete={onCardDelete}
+							/>
 						);
 					})}
 				</ul>
 			</section>
 		</main>
-	);
+	)
 }
 
 export default Main;

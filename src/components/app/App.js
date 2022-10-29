@@ -1,15 +1,21 @@
-import "./App.css";
-import Header from "../header/Header";
-import Footer from "../footer/Footer";
-import Main from "../main/Main";
-import ImagePopup from "../imagePopup/ImagePopup";
-import { useState, useEffect } from "react";
+import './App.css';
+import Header from '../Header/Header';
+import Footer from '../Footer/Footer';
+import Main from '../Main/Main';
+import ImagePopup from '../ImagePopup/ImagePopup';
+import React, { useState, useEffect } from "react";
+import { Route, useHistory } from 'react-router-dom';
+import ProtectedRoute from '../ProtectedRoute/ProtectedRoute';
 import { api } from '../utils/Api';
 import { TranslationContext } from '../../contexts/CurrentUserContext';
 import EditProfilePopup from '../EditProfilePopup/EditProfilePopup';
 import EditAvatarPopup from '../EditAvatarPopup/EditAvatarPopup';
 import AddPlacePopup from '../AddPlacePopup/AddPlacePopup';
 import ConfirmDeletePopup from '../ConfirmDeletePopup/ConfirmDeletePopup';
+import { auth } from '../utils/Auth';
+import InformMessagePopup from '../InformMessagePopup/InformMessagePopup';
+import Authorization from '../Authorization/Authorization';
+
 
 function App() {
 	const [currentUser, setCurrentUser] = useState({});
@@ -23,71 +29,123 @@ function App() {
 	const [cards, setCards] = useState([]);
 	const [isUpdateCards, setIsUpdateCards] = useState(false);
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
-
+	const [isOpenPopupMessage, setIsOpenPopupMessage] = useState(false);
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [isEmail, setIsEmail] = useState('')
+	const history = useHistory();
+	const [isRegister, setIsRegister] = useState(false);
+	const [isValidFormRegister, setIsValidFormRegister] = useState(true)
 	const isOpen =
 		isEditAvatarPopupOpen ||
 		isEditProfilePopupOpen ||
 		isAddPlacePopupOpen ||
 		selectedCard ||
-		isConfirmDeletePopupOpen;
+		isConfirmDeletePopupOpen ||
+		isOpenPopupMessage
 
-	useEffect(() => {
-		Promise.all([api.getUserInfo(), api.getCards()])
-			.then(([userData, cards]) => {
-				setCurrentUser(userData);
-				setCards(cards);
-			})
-			.catch((err) => {
-				err.then((res) => {
-					alert(res.message)
+	const handleTokenCheck = () => {
+		const jwt = localStorage.getItem('jwt');
+		if (jwt) {
+			auth
+				.checkToken(jwt)
+				.then(({ data }) => {
+					setIsEmail(data.email);
+					setIsLoggedIn(true);
+					history.push('/');
 				})
-			})
-	}, [isUpdateCards]);
+				.catch((err) => {
+					err.then(({ message }) => {
+						console.log(`Ошибка токена "${message}"`)
+					})
+				})
+		}
+	}
+
+	const handleExit = () => {
+		localStorage.removeItem("jwt");
+		setIsLoggedIn(false);
+		history.push('/sign-in');
+	}
 
 	useEffect(() => {
-		function closeOnEscape(event) {
+		handleTokenCheck();
+		if (isLoggedIn) {
+			Promise.all([api.getUserInfo(), api.getCards()])
+				.then(([userData, cards]) => {
+					setCurrentUser(userData);
+					setCards(cards);
+				})
+				.catch((err) => {
+					err.then(({ message }) => {
+						alert(message)
+					})
+				})
+		}
+	}, [isLoggedIn]);
+
+	useEffect(() => {
+		if (isLoggedIn) {
+			api
+				.getCards()
+				.then((cards) => {
+					setCards(cards);
+				})
+				.catch((err) => {
+					err.then(({ message }) => {
+						alert(message)
+					})
+				})
+		}
+	}, [isUpdateCards])
+
+	useEffect(() => {
+		function closeByEscape(event) {
 			if (event.key === 'Escape') {
 				closeAllPopups();
 			}
 		}
 		if (isOpen) {
-			document.addEventListener('keydown', closeOnEscape);
+			document.addEventListener('keydown', closeByEscape);
 			return () => {
-				document.removeEventListener('keydown', closeOnEscape);
+				document.removeEventListener('keydown', closeByEscape);
 			}
 		}
 	}, [isOpen]);
 
 	useEffect(() => {
 		if (!isOpen) return;
-		function handleOverlay(event) {
+		function handleOverley(event) {
 			if (event.target.classList.contains('popup_opened') ||
 				event.target.classList.contains('popup__button-close')) {
 				closeAllPopups();
 			}
 		};
-		document.addEventListener("mousedown", handleOverlay);
-		return () => document.removeEventListener("mousedown", handleOverlay);
+		document.addEventListener("mousedown", handleOverley);
+		return () => document.removeEventListener("mousedown", handleOverley);
 	}, [isOpen]);
 
 	const handleEditAvatarClick = () => {
 		setIsButtonDisabled(false)
 		setIsEditAvatarPopupOpen(true);
+		setIsValidFormRegister(false);
 	};
 
 	const handleEditProfileClick = () => {
 		setIsButtonDisabled(false)
 		setIsEditProfilePopupOpen(true);
+		setIsValidFormRegister(false);
 	};
 
 	const handleAddPlaceClick = () => {
 		setIsButtonDisabled(false)
 		setIsAddPlacePopupOpen(true);
+		setIsValidFormRegister(false);
 	};
 
 	const handleDeleteCardClick = () => {
 		setIsButtonDisabled(false)
 		setIsConfirmDeletePopupOpen(true);
+		setIsValidFormRegister(false);
 	};
 
 	const updateDeleteCard = (card) => {
@@ -109,7 +167,9 @@ function App() {
 		setIsAddPlacePopupOpen(false);
 		setIsConfirmDeletePopupOpen(false);
 		setSelectedCard(null);
-	};
+		setIsOpenPopupMessage(false)
+		setIsValidFormRegister(true);
+	}
 
 	const handleUpdateUser = (name, about) => {
 		setIsDownload(true);
@@ -136,8 +196,8 @@ function App() {
 				closeAllPopups();
 			})
 			.catch((err) => {
-				err.then((res) => {
-					alert(res.message)
+				err.then(({ message }) => {
+					alert(message)
 				})
 			})
 			.finally(() => setIsDownload(false))
@@ -156,8 +216,8 @@ function App() {
 				setCards((state) => state.map((c) => c._id === card._id ? newCard : c))
 			})
 			.catch((err) => {
-				err.then((res) => {
-					alert(res.message)
+				err.then(({ message }) => {
+					alert(message)
 				})
 			})
 	}
@@ -195,22 +255,106 @@ function App() {
 			.finally(() => setIsDownload(false))
 	};
 
+	const onSubmitRegister = (password, email) => {
+		setIsDownload(true);
+		auth
+			.register(password, email)
+			.then(({ data }) => {
+				setIsButtonDisabled(false)
+				setIsOpenPopupMessage(true);
+				setIsEmail(data.email);
+				history.push('/sign-in');
+				setIsRegister(true)
+			})
+			.catch((err) => {
+				err.then(({ error }) => {
+					setIsButtonDisabled(false)
+					setIsOpenPopupMessage(true);
+					setIsRegister(false)
+					console.log(`Ошибка регистрации ${error}`)
+				})
+			})
+			.finally(() => setIsDownload(false))
+	}
+
+	const onSubmitLogin = (password, email) => {
+		setIsDownload(true);
+		auth
+			.authorize(password, email)
+			.then(({ token }) => {
+				localStorage.setItem("jwt", token);
+				setIsButtonDisabled(false)
+				history.push('/');
+				setIsLoggedIn(true);
+			})
+			.catch((err) => {
+				err.then(({ message }) => {
+					setIsButtonDisabled(false)
+					setIsOpenPopupMessage(true);
+					setIsLoggedIn(false)
+					setIsRegister(false)
+					console.log(`Ошибка входа ${message}`)
+				})
+			})
+			.finally(() => setIsDownload(false))
+	}
+
 	return (
 		<TranslationContext.Provider value={currentUser}>
 			<div className="page">
-				<Header />
-
-				<Main
-					onEditProfile={handleEditProfileClick}
-					onEditAvatar={handleEditAvatarClick}
-					onAddPlace={handleAddPlaceClick}
-					onCardDelete={updateDeleteCard}
-					onCardClick={handleCardClick}
-					onCardLike={handleCardLike}
-					cards={cards}
+				<Header
+					email={isEmail}
+					isLoggedIn={isLoggedIn}
+					handleExit={handleExit}
 				/>
 
-				<Footer />
+				<Route exact path="/">
+
+					<ProtectedRoute
+						exact
+						path="/"
+						component={Main}
+						onEditProfile={handleEditProfileClick}
+						onEditAvatar={handleEditAvatarClick}
+						onAddPlace={handleAddPlaceClick}
+						onCardDelete={updateDeleteCard}
+						onCardClick={handleCardClick}
+						onCardLike={handleCardLike}
+						cards={cards}
+						isLoggedIn={isLoggedIn}
+					/>
+				</Route>
+				<Route path="/sign-up">
+
+					<Authorization
+						title='Регистрация'
+						name='register'
+						buttonText={`${!isDownload ? 'Зарегистрироваться' : 'Регистрирую...'}`}
+						isButtonDisabled={isButtonDisabled}
+						setIsButtonDisabled={setIsButtonDisabled}
+						onSubmit={onSubmitRegister}
+						isEmail={isEmail}
+						setIsEmail={setIsEmail}
+						isValidFormRegister={isValidFormRegister}
+					/>
+
+				</Route>
+				<Route path="/sign-in">
+
+					<Authorization
+						title='Вход'
+						name='login'
+						buttonText={`${!isDownload ? 'Войти' : 'Проверяю...'}`}
+						isButtonDisabled={isButtonDisabled}
+						setIsButtonDisabled={setIsButtonDisabled}
+						isEmail={isEmail}
+						setIsEmail={setIsEmail}
+						onSubmit={onSubmitLogin}
+						isValidFormRegister={isValidFormRegister}
+					/>
+
+				</Route>
+				{isLoggedIn && <Footer />}
 
 				<EditProfilePopup
 					isOpen={isEditProfilePopupOpen}
@@ -245,11 +389,14 @@ function App() {
 					setIsButtonDisabled={setIsButtonDisabled}
 				/>
 
-				<ImagePopup
-					card={selectedCard}
+				<ImagePopup card={selectedCard} />
+				<InformMessagePopup
+					isOpenPopupMessage={isOpenPopupMessage}
+					isRegister={isRegister}
+					isLoggedIn={isLoggedIn}
 				/>
 			</div>
-		</TranslationContext.Provider>
+		</TranslationContext.Provider >
 	);
 }
 
